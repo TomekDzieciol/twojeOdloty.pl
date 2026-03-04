@@ -2,6 +2,9 @@ import Link from "next/link";
 import { getNewestProfiles } from "@/lib/ads";
 import ProfileCard from "@/components/ProfileCard";
 import SearchFilters from "@/components/SearchFilters";
+import HomeHeader from "@/components/HomeHeader";
+
+export const dynamic = "force-dynamic";
 
 interface HomePageProps {
   searchParams: { q?: string; city?: string; gender?: string };
@@ -10,29 +13,13 @@ interface HomePageProps {
 export default async function HomePage({ searchParams }: HomePageProps) {
   const params = searchParams;
   const profiles = await getNewestProfiles({
+    q: params.q,
     city: params.city,
   });
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-[#2a2a32] bg-[var(--card)]">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <Link href="/home" className="text-lg font-semibold text-brand-400">
-            TowjeOdloty.pl
-          </Link>
-          <nav className="flex items-center gap-4">
-            <Link
-              href="/login"
-              className="text-sm text-[var(--muted)] hover:text-[var(--foreground)]"
-            >
-              Zaloguj
-            </Link>
-            <Link href="/register" className="btn-primary text-sm">
-              Rejestracja
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <HomeHeader />
 
       <main className="mx-auto max-w-6xl px-4 py-8">
         <section className="mb-8 text-center">
@@ -41,7 +28,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           </h1>
           <p className="mt-2 text-[var(--muted)]">
             Przeglądaj profile i znajdź kogo szukasz. Załóż konto i dodaj zdjęcie
-            profilowe, aby pojawić się w sekcji Nowe profile.
+            profilowe, aby pojawić się w Wynikach wyszukiwania.
           </p>
         </section>
 
@@ -50,7 +37,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </section>
 
         <section className="mb-8">
-          <h2 className="mb-4 text-xl font-semibold">Nowe profile</h2>
+          <h2 className="mb-4 text-xl font-semibold">Wyniki wyszukiwania</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {profiles.map((profile) => (
               <ProfileCard key={profile.id} profile={profile} />

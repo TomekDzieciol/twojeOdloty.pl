@@ -4,6 +4,7 @@ export interface Profile {
   id: string;
   display_name: string | null;
   city: string | null;
+  gender: AdGender | null;
   bio: string | null;
   phone: string | null;
   birth_date: string | null;

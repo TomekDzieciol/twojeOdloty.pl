@@ -130,6 +130,7 @@ export async function getAds(filters: {
 }
 
 export async function getNewestProfiles(filters: {
+  q?: string;
   city?: string;
 }): Promise<ProfileForListing[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -156,14 +157,18 @@ export async function getNewestProfiles(filters: {
   const userIds = Array.from(new Set(profileImages.map((row) => row.user_id)));
   const { data: profilesData, error: profilesError } = await supabase
     .from("profiles")
-    .select("id, display_name, city")
+    .select("id, display_name, city, bio")
     .in("id", userIds);
 
   if (profilesError) return [];
 
-  const profileById: Record<string, { display_name: string | null; city: string | null }> = {};
+  const profileById: Record<string, { display_name: string | null; city: string | null; bio: string | null }> = {};
   for (const p of profilesData ?? []) {
-    profileById[p.id] = { display_name: p.display_name ?? null, city: p.city ?? null };
+    profileById[p.id] = {
+      display_name: p.display_name ?? null,
+      city: p.city ?? null,
+      bio: (p as { bio?: string | null }).bio ?? null,
+    };
   }
 
   const pathByUser: Record<string, string> = {};
@@ -173,6 +178,7 @@ export async function getNewestProfiles(filters: {
 
   const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const cityFilter = filters.city?.trim()?.toLowerCase();
+  const queryFilter = filters.q?.trim()?.toLowerCase();
 
   const result: ProfileForListing[] = [];
   for (const row of profileImages) {
@@ -180,6 +186,11 @@ export async function getNewestProfiles(filters: {
     const profile = profileById[row.user_id];
     if (!profile) continue;
     if (cityFilter && !profile.city?.toLowerCase().includes(cityFilter)) continue;
+    if (queryFilter) {
+      const matchName = profile.display_name?.toLowerCase().includes(queryFilter);
+      const matchBio = profile.bio?.toLowerCase().includes(queryFilter);
+      if (!matchName && !matchBio) continue;
+    }
     if (result.some((r) => r.id === row.user_id)) continue;
     const profile_image_url =
       pathByUser[row.user_id] && baseUrl

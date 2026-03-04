@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { Profile } from "@/types/database";
+import type { Profile, AdGender } from "@/types/database";
+
+const GENDER_OPTIONS: { value: AdGender; label: string }[] = [
+  { value: "female", label: "Kobieta" },
+  { value: "male", label: "Mężczyzna" },
+  { value: "couple", label: "Para" },
+];
 
 interface DashboardProfileProps {
   profile?: Profile | null;
@@ -12,6 +18,7 @@ interface DashboardProfileProps {
 export default function DashboardProfile({ profile, userId }: DashboardProfileProps) {
   const [displayName, setDisplayName] = useState(profile?.display_name ?? "");
   const [city, setCity] = useState(profile?.city ?? "");
+  const [gender, setGender] = useState<AdGender | "">(profile?.gender ?? "");
   const [bio, setBio] = useState(profile?.bio ?? "");
   const [phone, setPhone] = useState(profile?.phone ?? "");
   const [saving, setSaving] = useState(false);
@@ -27,6 +34,7 @@ export default function DashboardProfile({ profile, userId }: DashboardProfilePr
       .update({
         display_name: displayName.trim() || null,
         city: city.trim() || null,
+        gender: gender || null,
         bio: bio.trim() || null,
         phone: phone.trim() || null,
       })
@@ -64,6 +72,23 @@ export default function DashboardProfile({ profile, userId }: DashboardProfilePr
           onChange={(e) => setCity(e.target.value)}
           placeholder="np. Warszawa"
         />
+      </div>
+      <div>
+        <label className="mb-1 block text-sm text-[var(--muted)]">
+          Płeć
+        </label>
+        <select
+          className="input"
+          value={gender}
+          onChange={(e) => setGender((e.target.value || "") as AdGender | "")}
+        >
+          <option value="">— wybierz —</option>
+          {GENDER_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
       </div>
       <div>
         <label className="mb-1 block text-sm text-[var(--muted)]">

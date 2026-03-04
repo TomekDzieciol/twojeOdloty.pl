@@ -33,7 +33,7 @@ export default async function DashboardLayout({
     <div className="min-h-screen">
       <header className="border-b border-[#2a2a32] bg-[var(--card)]">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <Link href="/home" className="text-lg font-semibold text-brand-400">
+          <Link href="/home" prefetch={false} className="text-lg font-semibold text-brand-400">
             TowjeOdloty.pl
           </Link>
           <nav className="flex items-center gap-4">

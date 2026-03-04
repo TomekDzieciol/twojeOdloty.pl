@@ -11,7 +11,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const supabase = createClient();
 
   const [profileRes, imagesRes] = await Promise.all([
-    supabase.from("profiles").select("id, display_name, city, bio").eq("id", userId).single(),
+    supabase.from("profiles").select("id, display_name, city, gender, bio").eq("id", userId).single(),
     supabase
       .from("images")
       .select("path, is_profile, sort_order")
@@ -38,7 +38,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     <div className="min-h-screen">
       <header className="border-b border-[#2a2a32] bg-[var(--card)]">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <Link href="/home" className="text-lg font-semibold text-brand-400">
+          <Link href="/home" prefetch={false} className="text-lg font-semibold text-brand-400">
             TowjeOdloty.pl
           </Link>
           <nav className="flex items-center gap-4">
@@ -77,8 +77,12 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           <h1 className="text-2xl font-bold">
             {profile.display_name || "Profil"}
           </h1>
-          {profile.city && (
-            <p className="mt-1 text-[var(--muted)]">{profile.city}</p>
+          {(profile.city || profile.gender) && (
+            <p className="mt-1 text-[var(--muted)]">
+              {[profile.city, profile.gender === "female" ? "Kobieta" : profile.gender === "male" ? "Mężczyzna" : profile.gender === "couple" ? "Para" : null]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
           )}
           {profile.bio && (
             <p className="mt-3 text-[var(--muted)] whitespace-pre-wrap">{profile.bio}</p>

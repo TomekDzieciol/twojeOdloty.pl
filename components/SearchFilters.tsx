@@ -31,12 +31,12 @@ export default function SearchFilters() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <label className="mb-1 block text-sm text-[var(--muted)]">
-            Treść (tytuł)
+            Nazwa lub opis
           </label>
           <input
             type="text"
             className="input"
-            placeholder="Słowa z tytułu…"
+            placeholder="Nazwa, słowa z opisu…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && apply()}

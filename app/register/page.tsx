@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -11,7 +11,7 @@ function safeRedirect(path: string | null): string {
   return path;
 }
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = safeRedirect(searchParams.get("redirect"));
@@ -146,5 +146,34 @@ export default function RegisterPage() {
         ← Strona główna
       </Link>
     </div>
+  );
+}
+
+function RegisterFallback() {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-4">
+      <div className="card w-full max-w-md">
+        <div className="animate-pulse space-y-4">
+          <div className="h-6 bg-[var(--muted)]/30 rounded w-1/2 mx-auto" />
+          <div className="h-10 bg-[var(--muted)]/20 rounded" />
+          <div className="h-10 bg-[var(--muted)]/20 rounded" />
+          <div className="h-10 bg-[var(--muted)]/20 rounded" />
+        </div>
+      </div>
+      <Link
+        href="/home"
+        className="mt-6 text-sm text-[var(--muted)] hover:text-[var(--foreground)]"
+      >
+        ← Strona główna
+      </Link>
+    </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<RegisterFallback />}>
+      <RegisterForm />
+    </Suspense>
   );
 }

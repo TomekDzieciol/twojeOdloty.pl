@@ -11,6 +11,9 @@ export interface Profile {
   updated_at: string;
 }
 
+/** Minimal profile from join (display_name, city); full Profile has more fields. */
+export type AdProfile = Profile | Pick<Profile, "display_name" | "city">;
+
 export interface Ad {
   id: string;
   user_id: string;
@@ -21,7 +24,7 @@ export interface Ad {
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  profiles?: Profile | null;
+  profiles?: AdProfile | null;
 }
 
 export interface ImageRecord {

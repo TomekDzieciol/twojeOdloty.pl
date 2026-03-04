@@ -91,7 +91,7 @@ export async function getAds(filters: {
   const { data: ads, error } = await query;
   if (error) return MOCK_ADS;
 
-  const userIds = [...new Set((ads ?? []).map((a: { user_id: string }) => a.user_id))];
+  const userIds = Array.from(new Set((ads ?? []).map((a: { user_id: string }) => a.user_id)));
   const { data: images } = await supabase
     .from("images")
     .select("user_id, path")

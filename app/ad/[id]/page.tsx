@@ -36,7 +36,23 @@ export default async function AdDetailPage({ params }: AdDetailPageProps) {
         .eq("id", params.id)
         .eq("is_active", true)
         .single();
-      if (!error && data) ad = data as typeof MOCK_AD;
+      if (!error && data) {
+        const raw = data as {
+          id: string;
+          title: string;
+          body: string;
+          gender: string;
+          city: string;
+          created_at: string;
+          user_id: string;
+          profiles: { display_name: string; city: string }[] | { display_name: string; city: string } | null;
+        };
+        const profile = Array.isArray(raw.profiles) ? raw.profiles[0] : raw.profiles;
+        ad = {
+          ...raw,
+          profiles: profile ?? { display_name: "", city: "" },
+        } as typeof MOCK_AD;
+      }
       if (ad) {
         const { data: img } = await supabase
           .from("images")

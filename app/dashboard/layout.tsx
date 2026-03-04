@@ -43,6 +43,12 @@ export default async function DashboardLayout({
             >
               Mój profil
             </Link>
+            <Link
+              href="/dashboard/messages"
+              className="text-sm text-[var(--muted)] hover:text-brand-400"
+            >
+              Wiadomości
+            </Link>
             {isAdmin && (
               <Link
                 href="/dashboard/admin"

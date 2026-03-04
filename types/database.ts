@@ -37,3 +37,19 @@ export interface ImageRecord {
   sort_order: number;
   created_at: string;
 }
+
+export interface Message {
+  id: string;
+  sender_id: string;
+  recipient_id: string;
+  ad_id: string | null;
+  body: string;
+  read_at: string | null;
+  created_at: string;
+}
+
+/** Message with sender/recipient display names from profiles join. */
+export interface MessageWithProfiles extends Message {
+  sender?: Pick<Profile, "display_name"> | null;
+  recipient?: Pick<Profile, "display_name"> | null;
+}

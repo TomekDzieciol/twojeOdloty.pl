@@ -2,11 +2,19 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+
+function safeRedirect(path: string | null): string {
+  if (!path || typeof path !== "string") return "/dashboard";
+  if (!path.startsWith("/")) return "/dashboard";
+  return path;
+}
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = safeRedirect(searchParams.get("redirect"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -22,7 +30,7 @@ export default function RegisterPage() {
     setResendMessage(null);
     setLoading(true);
     const supabase = createClient();
-    const emailRedirectTo = `${window.location.origin}/dashboard`;
+    const emailRedirectTo = `${window.location.origin}${redirect}`;
     const { data: signUpData, error: err } = await supabase.auth.signUp({
       email,
       password,
@@ -34,7 +42,7 @@ export default function RegisterPage() {
       return;
     }
     if (signUpData?.session) {
-      router.push("/dashboard");
+      router.push(redirect);
       router.refresh();
     } else {
       setSuccess(
@@ -123,7 +131,10 @@ export default function RegisterPage() {
         </form>
         <p className="mt-4 text-center text-sm text-[var(--muted)]">
           Masz już konto?{" "}
-          <Link href="/login" className="text-brand-400 hover:underline">
+          <Link
+            href={redirect !== "/dashboard" ? `/login?redirect=${encodeURIComponent(redirect)}` : "/login"}
+            className="text-brand-400 hover:underline"
+          >
             Zaloguj się
           </Link>
         </p>

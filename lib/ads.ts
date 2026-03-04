@@ -132,7 +132,23 @@ export async function getAds(filters: {
 export async function getNewestProfiles(filters: {
   q?: string;
   city?: string;
+  gender?: string;
 }): Promise<ProfileForListing[]> {
+  // #region agent log
+  fetch("http://127.0.0.1:7495/ingest/c720522d-88ec-4537-be17-5d4accf4276b", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "f4a395" },
+    body: JSON.stringify({
+      sessionId: "f4a395",
+      runId: "post-fix",
+      hypothesisId: "H2",
+      location: "lib/ads.ts getNewestProfiles",
+      message: "getNewestProfiles filters",
+      data: { filtersKeys: Object.keys(filters), filters },
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!url || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     return [];
@@ -157,17 +173,22 @@ export async function getNewestProfiles(filters: {
   const userIds = Array.from(new Set(profileImages.map((row) => row.user_id)));
   const { data: profilesData, error: profilesError } = await supabase
     .from("profiles")
-    .select("id, display_name, city, bio")
+    .select("id, display_name, city, bio, gender")
     .in("id", userIds);
 
   if (profilesError) return [];
 
-  const profileById: Record<string, { display_name: string | null; city: string | null; bio: string | null }> = {};
+  const profileById: Record<
+    string,
+    { display_name: string | null; city: string | null; bio: string | null; gender: string | null }
+  > = {};
   for (const p of profilesData ?? []) {
-    profileById[p.id] = {
-      display_name: p.display_name ?? null,
-      city: p.city ?? null,
-      bio: (p as { bio?: string | null }).bio ?? null,
+    const row = p as { id: string; display_name?: string | null; city?: string | null; bio?: string | null; gender?: string | null };
+    profileById[row.id] = {
+      display_name: row.display_name ?? null,
+      city: row.city ?? null,
+      bio: row.bio ?? null,
+      gender: row.gender ?? null,
     };
   }
 
@@ -179,12 +200,14 @@ export async function getNewestProfiles(filters: {
   const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const cityFilter = filters.city?.trim()?.toLowerCase();
   const queryFilter = filters.q?.trim()?.toLowerCase();
+  const genderFilter = filters.gender?.trim() || null;
 
   const result: ProfileForListing[] = [];
   for (const row of profileImages) {
     if (result.length >= 24) break;
     const profile = profileById[row.user_id];
     if (!profile) continue;
+    if (genderFilter && profile.gender !== genderFilter) continue;
     if (cityFilter && !profile.city?.toLowerCase().includes(cityFilter)) continue;
     if (queryFilter) {
       const matchName = profile.display_name?.toLowerCase().includes(queryFilter);

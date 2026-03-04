@@ -2,11 +2,19 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+
+function safeRedirect(path: string | null): string {
+  if (!path || typeof path !== "string") return "/dashboard";
+  if (!path.startsWith("/")) return "/dashboard";
+  return path;
+}
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = safeRedirect(searchParams.get("redirect"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -30,7 +38,7 @@ export default function LoginPage() {
       setError(message);
       return;
     }
-    router.push("/dashboard");
+    router.push(redirect);
     router.refresh();
   };
 
@@ -76,7 +84,10 @@ export default function LoginPage() {
         </form>
         <p className="mt-4 text-center text-sm text-[var(--muted)]">
           Nie masz konta?{" "}
-          <Link href="/register" className="text-brand-400 hover:underline">
+          <Link
+            href={redirect !== "/dashboard" ? `/register?redirect=${encodeURIComponent(redirect)}` : "/register"}
+            className="text-brand-400 hover:underline"
+          >
             Zarejestruj się
           </Link>
         </p>

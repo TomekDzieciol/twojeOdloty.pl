@@ -12,9 +12,29 @@ interface HomePageProps {
 
 export default async function HomePage({ searchParams }: HomePageProps) {
   const params = searchParams;
+  // #region agent log
+  fetch("http://127.0.0.1:7495/ingest/c720522d-88ec-4537-be17-5d4accf4276b", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "f4a395" },
+    body: JSON.stringify({
+      sessionId: "f4a395",
+      runId: "initial",
+      hypothesisId: "H1_H5",
+      location: "app/home/page.tsx",
+      message: "Home page searchParams and getNewestProfiles args",
+      data: {
+        searchParamsKeys: Object.keys(params),
+        searchParamsGender: params.gender,
+        passedToGetNewestProfiles: { q: params.q, city: params.city },
+      },
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
   const profiles = await getNewestProfiles({
     q: params.q,
     city: params.city,
+    gender: params.gender,
   });
 
   return (

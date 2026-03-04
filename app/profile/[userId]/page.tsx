@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { PhoneReveal } from "@/components/PhoneReveal";
+import { ProfileMessageAction } from "@/components/ProfileMessageAction";
 
 interface ProfilePageProps {
   params: { userId: string };
@@ -10,14 +12,15 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const { userId } = params;
   const supabase = createClient();
 
-  const [profileRes, imagesRes] = await Promise.all([
-    supabase.from("profiles").select("id, display_name, city, gender, bio").eq("id", userId).single(),
+  const [profileRes, imagesRes, authRes] = await Promise.all([
+    supabase.from("profiles").select("id, display_name, city, gender, bio, phone").eq("id", userId).single(),
     supabase
       .from("images")
       .select("path, is_profile, sort_order")
       .eq("user_id", userId)
       .order("is_profile", { ascending: false })
       .order("sort_order", { ascending: true }),
+    supabase.auth.getUser(),
   ]);
 
   if (profileRes.error || !profileRes.data) notFound();
@@ -87,6 +90,8 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           {profile.bio && (
             <p className="mt-3 text-[var(--muted)] whitespace-pre-wrap">{profile.bio}</p>
           )}
+          <PhoneReveal userId={userId} hasPhone={!!(profile as { phone?: string }).phone?.trim()} />
+          <ProfileMessageAction profileUserId={userId} currentUserId={authRes.data.user?.id ?? null} />
           {galleryImages.length > 0 && (
             <div className="mt-6">
               <h2 className="text-lg font-semibold mb-3">Galeria</h2>

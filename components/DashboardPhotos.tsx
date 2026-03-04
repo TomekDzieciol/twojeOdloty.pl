@@ -17,19 +17,27 @@ export default function DashboardPhotos({
 }: DashboardPhotosProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
-  const [isProfile, setIsProfile] = useState(true);
 
   const profileImage = images.find((i) => i.is_profile);
   const galleryImages = images.filter((i) => !i.is_profile);
 
-  const upload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const upload = async (e: React.ChangeEvent<HTMLInputElement>, asProfile: boolean) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = ""; // reset so the same input can be used again
     setError("");
     setUploading(true);
     const supabase = createClient();
+
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (!authUser) {
+      setError("Musisz być zalogowany, aby dodać zdjęcie.");
+      setUploading(false);
+      return;
+    }
+
     const ext = file.name.split(".").pop() ?? "jpg";
-    const path = `${userId}/${crypto.randomUUID()}.${ext}`;
+    const path = `${authUser.id}/${crypto.randomUUID()}.${ext}`;
 
     const { error: uploadErr } = await supabase.storage
       .from("images")
@@ -41,15 +49,24 @@ export default function DashboardPhotos({
       return;
     }
 
+    const isProfile = asProfile;
+    const sortOrder = asProfile ? 0 : galleryImages.length;
+    console.log("[DashboardPhotos] przed insert:", {
+      asProfile,
+      is_profile: isProfile,
+      sort_order: sortOrder,
+      galleryImagesCount: galleryImages.length,
+    });
+
     const { error: insertErr } = await supabase.from("images").insert({
-      user_id: userId,
+      user_id: authUser.id,
       path,
       is_profile: isProfile,
-      sort_order: isProfile ? 0 : galleryImages.length,
+      sort_order: sortOrder,
     });
 
     if (insertErr) {
-      setError(insertErr.message);
+      setError(`${insertErr.message} (debug: is_profile=${isProfile}, asProfile=${asProfile})`);
       setUploading(false);
       return;
     }
@@ -65,10 +82,11 @@ export default function DashboardPhotos({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap gap-4">
-        <div className="w-32 text-center">
-          <p className="text-xs text-[var(--muted)] mb-2">Zdjęcie profilowe</p>
+    <div className="space-y-8">
+      {/* Sekcja: tylko zdjęcie profilowe */}
+      <div>
+        <p className="text-xs text-[var(--muted)] mb-2">Zdjęcie profilowe</p>
+        <div className="w-32">
           {profileImage ? (
             <div className="relative">
               <img
@@ -87,16 +105,22 @@ export default function DashboardPhotos({
           ) : (
             <label className="block aspect-square w-32 rounded-lg border border-dashed border-[#2a2a32] cursor-pointer hover:border-brand-500 flex items-center justify-center text-[var(--muted)] text-xs">
               <input
+                key="profile-photo-input"
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 className="hidden"
-                onChange={upload}
+                onChange={(e) => upload(e, true)}
                 disabled={uploading}
               />
               + Dodaj
             </label>
           )}
         </div>
+      </div>
+
+      {/* Sekcja: galeria (do 6 zdjęć) */}
+      <div>
+        <p className="text-xs text-[var(--muted)] mb-2">Galeria (do 6 zdjęć)</p>
         <div className="flex flex-wrap gap-2">
           {galleryImages.map((img) => (
             <div key={img.id} className="w-24 relative">
@@ -117,20 +141,19 @@ export default function DashboardPhotos({
           {galleryImages.length < 6 && (
             <label className="flex w-24 h-24 rounded-lg border border-dashed border-[#2a2a32] cursor-pointer hover:border-brand-500 items-center justify-center text-[var(--muted)] text-xs">
               <input
+                key="gallery-photo-input"
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 className="hidden"
-                onChange={(e) => {
-                  setIsProfile(false);
-                  upload(e);
-                }}
+                onChange={(e) => upload(e, false)}
                 disabled={uploading}
               />
-              + Galeria
+              + Dodaj do galerii
             </label>
           )}
         </div>
       </div>
+
       {error && <p className="text-red-400 text-sm">{error}</p>}
       {uploading && <p className="text-sm text-[var(--muted)]">Wgrywanie…</p>}
     </div>

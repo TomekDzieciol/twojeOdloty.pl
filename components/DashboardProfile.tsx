@@ -12,6 +12,7 @@ interface DashboardProfileProps {
 export default function DashboardProfile({ profile, userId }: DashboardProfileProps) {
   const [displayName, setDisplayName] = useState(profile?.display_name ?? "");
   const [city, setCity] = useState(profile?.city ?? "");
+  const [bio, setBio] = useState(profile?.bio ?? "");
   const [phone, setPhone] = useState(profile?.phone ?? "");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -26,6 +27,7 @@ export default function DashboardProfile({ profile, userId }: DashboardProfilePr
       .update({
         display_name: displayName.trim() || null,
         city: city.trim() || null,
+        bio: bio.trim() || null,
         phone: phone.trim() || null,
       })
       .eq("id", userId);
@@ -61,6 +63,18 @@ export default function DashboardProfile({ profile, userId }: DashboardProfilePr
           value={city}
           onChange={(e) => setCity(e.target.value)}
           placeholder="np. Warszawa"
+        />
+      </div>
+      <div>
+        <label className="mb-1 block text-sm text-[var(--muted)]">
+          Opis
+        </label>
+        <textarea
+          className="input min-h-[100px] resize-y"
+          value={bio}
+          onChange={(e) => setBio(e.target.value)}
+          placeholder="Krótki opis Twojego profilu…"
+          rows={4}
         />
       </div>
       <div>

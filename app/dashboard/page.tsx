@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import DashboardProfile from "@/components/DashboardProfile";
 import DashboardPhotos from "@/components/DashboardPhotos";
-import DashboardAds from "@/components/DashboardAds";
 
 export default async function DashboardPage() {
   const supabase = createClient();
@@ -12,9 +11,8 @@ export default async function DashboardPage() {
 
   let profile: unknown = null;
   let images: unknown[] = [];
-  let ads: unknown[] = [];
   try {
-    const [profileRes, imagesRes, adsRes] = await Promise.all([
+    const [profileRes, imagesRes] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", user.id).single(),
       supabase
         .from("images")
@@ -22,15 +20,9 @@ export default async function DashboardPage() {
         .eq("user_id", user.id)
         .order("is_profile", { ascending: false })
         .order("sort_order", { ascending: true }),
-      supabase
-        .from("ads")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false }),
     ]);
     profile = profileRes.data;
     images = imagesRes.data ?? [];
-    ads = adsRes.data ?? [];
   } catch {
     // tabele mogą nie istnieć przed migracjami
   }
@@ -42,7 +34,7 @@ export default async function DashboardPage() {
       <div>
         <h1 className="text-2xl font-bold">Mój profil</h1>
         <p className="text-[var(--muted)]">
-          Zarządzaj danymi, zdjęciami i ogłoszeniami.
+          Zarządzaj danymi i zdjęciami. Zdjęcie profilowe pokaże Cię w sekcji „Nowe profile” na stronie głównej.
         </p>
       </div>
 
@@ -64,11 +56,6 @@ export default async function DashboardPage() {
           images={images as import("@/types/database").ImageRecord[]}
           baseUrl={baseUrl}
         />
-      </section>
-
-      <section className="card">
-        <h2 className="text-lg font-semibold mb-4">Moje ogłoszenia</h2>
-        <DashboardAds userId={user.id} ads={ads as import("@/types/database").Ad[]} />
       </section>
     </div>
   );

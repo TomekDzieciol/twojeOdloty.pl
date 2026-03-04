@@ -23,7 +23,11 @@ export default function LoginPage() {
     });
     setLoading(false);
     if (err) {
-      setError(err.message);
+      const message =
+        err.message === "Invalid login credentials"
+          ? "Adres e-mail nie jest w bazie lub hasło jest błędne. Sprawdź dane i spróbuj ponownie."
+          : err.message;
+      setError(message);
       return;
     }
     router.push("/dashboard");

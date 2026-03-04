@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { getAds } from "@/lib/ads";
-import AdCard from "@/components/AdCard";
+import { getNewestProfiles } from "@/lib/ads";
+import ProfileCard from "@/components/ProfileCard";
 import SearchFilters from "@/components/SearchFilters";
 
 interface HomePageProps {
@@ -9,10 +9,8 @@ interface HomePageProps {
 
 export default async function HomePage({ searchParams }: HomePageProps) {
   const params = searchParams;
-  const ads = await getAds({
-    q: params.q,
+  const profiles = await getNewestProfiles({
     city: params.city,
-    gender: params.gender,
   });
 
   return (
@@ -42,8 +40,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             Ogłoszenia towarzyskie
           </h1>
           <p className="mt-2 text-[var(--muted)]">
-            Przeglądaj profile i znajdź kogo szukasz. Załóż konto, aby dodawać
-            własne ogłoszenia.
+            Przeglądaj profile i znajdź kogo szukasz. Załóż konto i dodaj zdjęcie
+            profilowe, aby pojawić się w sekcji Nowe profile.
           </p>
         </section>
 
@@ -52,19 +50,15 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </section>
 
         <section className="mb-8">
-          <h2 className="mb-4 text-xl font-semibold">Ostatnie ogłoszenia</h2>
+          <h2 className="mb-4 text-xl font-semibold">Nowe profile</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {ads.map((ad) => (
-              <AdCard
-                key={ad.id}
-                ad={ad}
-                profileImageUrl={ad.profile_image_url ?? ad.profile_image_path}
-              />
+            {profiles.map((profile) => (
+              <ProfileCard key={profile.id} profile={profile} />
             ))}
           </div>
-          {ads.length === 0 && (
+          {profiles.length === 0 && (
             <p className="text-[var(--muted)]">
-              Brak ogłoszeń spełniających kryteria. Spróbuj zmienić filtry.
+              Brak profili spełniających kryteria. Dodaj zdjęcie profilowe w swoim koncie, aby pojawić się tutaj.
             </p>
           )}
         </section>
@@ -72,7 +66,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <section className="card text-center">
           <h2 className="text-lg font-semibold">Dołącz do portalu</h2>
           <p className="mt-1 text-sm text-[var(--muted)]">
-            Załóż konto, dodawaj zdjęcia i ogłoszenia, odpowiadaj na wiadomości.
+            Załóż konto, dodaj zdjęcie profilowe i odpowiadaj na wiadomości.
           </p>
           <Link href="/register" className="btn-primary mt-4 inline-block">
             Zarejestruj się

@@ -1,8 +1,21 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Ad } from "@/types/database";
 
+export interface ProfileForListing {
+  id: string;
+  display_name: string | null;
+  city: string | null;
+  profile_image_url: string | null;
+}
+
+export interface ProfileInAd {
+  display_name: string | null;
+  city: string | null;
+  created_at?: string | null;
+}
+
 export interface AdWithProfile extends Ad {
-  profiles: { display_name: string | null; city: string | null } | null;
+  profiles: ProfileInAd | null;
   profile_image_path: string | null;
   profile_image_url?: string | null;
 }
@@ -68,12 +81,7 @@ export async function getAds(filters: {
 
   let query = supabase
     .from("ads")
-    .select(
-      `
-      id, user_id, title, body, gender, city, is_active, created_at, updated_at,
-      profiles(display_name, city)
-    `
-    )
+    .select("id, user_id, title, body, gender, city, is_active, created_at, updated_at")
     .eq("is_active", true)
     .order("created_at", { ascending: false })
     .limit(24);
@@ -91,27 +99,98 @@ export async function getAds(filters: {
   const { data: ads, error } = await query;
   if (error) return MOCK_ADS;
 
-  const userIds = Array.from(new Set((ads ?? []).map((a: { user_id: string }) => a.user_id)));
-  const { data: images } = await supabase
-    .from("images")
-    .select("user_id, path")
-    .eq("is_profile", true)
-    .in("user_id", userIds);
+  const adsList = ads ?? [];
+  const userIds = Array.from(new Set(adsList.map((a: { user_id: string }) => a.user_id)));
+  const [profilesRes, imagesRes] = await Promise.all([
+    supabase.from("profiles").select("id, display_name, city").in("id", userIds),
+    supabase.from("images").select("user_id, path").eq("is_profile", true).in("user_id", userIds),
+  ]);
 
+  const profileByUserId: Record<string, { display_name: string | null; city: string | null }> = {};
+  for (const p of profilesRes.data ?? []) {
+    profileByUserId[p.id] = { display_name: p.display_name ?? null, city: p.city ?? null };
+  }
   const pathByUser: Record<string, string> = {};
-  for (const img of images ?? []) {
+  for (const img of imagesRes.data ?? []) {
     pathByUser[img.user_id] = img.path;
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-  return (ads ?? []).map((a: Record<string, unknown>) => {
+  return adsList.map((a: Record<string, unknown>) => {
     const path = pathByUser[a.user_id as string];
     const profile_image_url =
       path && baseUrl ? `${baseUrl}/storage/v1/object/public/images/${path}` : null;
     return {
       ...a,
+      profiles: profileByUserId[a.user_id as string] ?? null,
       profile_image_path: path ?? null,
       profile_image_url,
     };
   }) as AdWithProfile[];
+}
+
+export async function getNewestProfiles(filters: {
+  city?: string;
+}): Promise<ProfileForListing[]> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!url || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return [];
+  }
+
+  let supabase;
+  try {
+    supabase = createClient();
+  } catch {
+    return [];
+  }
+
+  const { data: profileImages, error: imagesError } = await supabase
+    .from("images")
+    .select("user_id, path, created_at")
+    .eq("is_profile", true)
+    .order("created_at", { ascending: false })
+    .limit(200);
+
+  if (imagesError || !profileImages?.length) return [];
+
+  const userIds = Array.from(new Set(profileImages.map((row) => row.user_id)));
+  const { data: profilesData, error: profilesError } = await supabase
+    .from("profiles")
+    .select("id, display_name, city")
+    .in("id", userIds);
+
+  if (profilesError) return [];
+
+  const profileById: Record<string, { display_name: string | null; city: string | null }> = {};
+  for (const p of profilesData ?? []) {
+    profileById[p.id] = { display_name: p.display_name ?? null, city: p.city ?? null };
+  }
+
+  const pathByUser: Record<string, string> = {};
+  for (const row of profileImages) {
+    if (!pathByUser[row.user_id]) pathByUser[row.user_id] = row.path;
+  }
+
+  const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const cityFilter = filters.city?.trim()?.toLowerCase();
+
+  const result: ProfileForListing[] = [];
+  for (const row of profileImages) {
+    if (result.length >= 24) break;
+    const profile = profileById[row.user_id];
+    if (!profile) continue;
+    if (cityFilter && !profile.city?.toLowerCase().includes(cityFilter)) continue;
+    if (result.some((r) => r.id === row.user_id)) continue;
+    const profile_image_url =
+      pathByUser[row.user_id] && baseUrl
+        ? `${baseUrl}/storage/v1/object/public/images/${pathByUser[row.user_id]}`
+        : null;
+    result.push({
+      id: row.user_id,
+      display_name: profile.display_name,
+      city: profile.city,
+      profile_image_url,
+    });
+  }
+  return result;
 }

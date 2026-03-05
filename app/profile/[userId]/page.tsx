@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PhoneReveal } from "@/components/PhoneReveal";
 import { ProfileMessageAction } from "@/components/ProfileMessageAction";
+import { ReviewSection } from "@/components/ReviewSection";
 
 interface ProfilePageProps {
   params: { userId: string };
@@ -58,7 +59,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-2xl px-4 py-8">
+      <main className="mx-auto max-w-2xl px-4 py-8 space-y-6">
         <Link href="/home" className="text-sm text-[var(--muted)] hover:text-[var(--foreground)] mb-6 inline-block">
           ← Powrót do listy
         </Link>
@@ -112,6 +113,8 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             </div>
           )}
         </div>
+
+        <ReviewSection profileUserId={userId} />
       </main>
     </div>
   );

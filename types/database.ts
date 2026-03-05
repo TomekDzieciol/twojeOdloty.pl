@@ -53,3 +53,14 @@ export interface MessageWithProfiles extends Message {
   sender?: Pick<Profile, "display_name"> | null;
   recipient?: Pick<Profile, "display_name"> | null;
 }
+
+export interface Review {
+  id: string;
+  profile_id: string;
+  author_id: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+  updated_at: string;
+  author_display_name?: string | null;
+}

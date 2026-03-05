@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import DashboardAdminUsers from "@/components/DashboardAdminUsers";
 import DashboardAdminBans from "@/components/DashboardAdminBans";
+import DashboardAdminReviews from "@/components/DashboardAdminReviews";
 
 export default async function DashboardAdminPage() {
   const supabase = createClient();
@@ -34,6 +35,11 @@ export default async function DashboardAdminPage() {
       <section className="card">
         <h2 className="text-lg font-semibold mb-4">Użytkownicy</h2>
         <DashboardAdminUsers />
+      </section>
+
+      <section className="card">
+        <h2 className="text-lg font-semibold mb-4">Moderacja opinii</h2>
+        <DashboardAdminReviews />
       </section>
     </div>
   );
